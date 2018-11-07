@@ -1,0 +1,73 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="TestCases\TestCase_001.cs" />
+    <Compile Remove="TestCases\TestCase_002.cs" />
+    <Compile Remove="TestCases\TestCase_003.cs" />
+    <Compile Remove="TestCases\TestCase_004.cs" />
+    <Compile Remove="TestCases\TestCase_005.cs" />
+    <Compile Remove="TestCases\TestCase_006.cs" />
+    <Compile Remove="TestCases\TestCase_007.cs" />
+    <Compile Remove="TestCases\TestCase_008.cs" />
+    <Compile Remove="TestCases\TestCase_009.cs" />
+    <Compile Remove="TestCases\TestCase_010.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="TestCases\TestCase_001.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_002.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_003.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_004.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_005.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_006.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_007.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_008.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_009.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_010.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FakeItEasy" Version="4.9.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
+    <PackageReference Include="xunit" Version="2.4.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="TestCasesRewritten\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Frisia.Rewriter\Frisia.Rewriter.csproj" />
+  </ItemGroup>
+
+</Project>
