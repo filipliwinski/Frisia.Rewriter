@@ -24,7 +24,7 @@ namespace Frisia.Rewriter
             get
             {
                 return rewriterTrue ??
-                    (rewriterTrue = new FrisiaSyntaxRewriter(LoopIterations, ConditionsTrue, Parameters, SMS, logger, solver, VisitUnsatisfiablePaths));
+                    (rewriterTrue = new FrisiaSyntaxRewriter(ConditionsTrue, Parameters, SMS, solver, logger, LoopIterations, VisitUnsatisfiablePaths));
             }
         }
         private FrisiaSyntaxRewriter RewriterFalse
@@ -32,7 +32,7 @@ namespace Frisia.Rewriter
             get
             {
                 return rewriterFalse ??
-                    (rewriterFalse = new FrisiaSyntaxRewriter(LoopIterations, ConditionsFalse, Parameters, SMS, logger, solver, VisitUnsatisfiablePaths));
+                    (rewriterFalse = new FrisiaSyntaxRewriter(ConditionsFalse, Parameters, SMS, solver, logger, LoopIterations, VisitUnsatisfiablePaths));
             }
         }
 
@@ -45,12 +45,12 @@ namespace Frisia.Rewriter
         public uint LoopIterations { get; private set; }
 
         public FrisiaSyntaxRewriter(
-            uint loopIterations,
             IList<ExpressionSyntax> conditions,
             SeparatedSyntaxList<ParameterSyntax> parameters,
             SymbolicMemoryState sms,
-            ILogger logger,
             ISolver solver,
+            ILogger logger,
+            uint loopIterations = 1,
             bool visitUnsatisfiablePaths = false)
         {
             this.logger = logger;
