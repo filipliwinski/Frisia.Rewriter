@@ -15,6 +15,11 @@ namespace Frisia.Rewriter
     {
         private readonly ILogger logger;
         private readonly ISolver solver;
+
+        public readonly uint LoopIterations;
+        public readonly bool VisitUnsatPaths;
+        public readonly bool LogFoundBranches;
+
         private FrisiaSyntaxRewriter rewriterTrue = null;
         private FrisiaSyntaxRewriter rewriterFalse = null;
         private List<string[]> results;
@@ -24,7 +29,7 @@ namespace Frisia.Rewriter
             get
             {
                 return rewriterTrue ??
-                    (rewriterTrue = new FrisiaSyntaxRewriter(ConditionsTrue, Parameters, SMS, solver, logger, LoopIterations, VisitUnsatisfiablePaths));
+                    (rewriterTrue = new FrisiaSyntaxRewriter(ConditionsTrue, Parameters, SMS, solver, logger, LoopIterations, VisitUnsatPaths, LogFoundBranches));
             }
         }
         private FrisiaSyntaxRewriter RewriterFalse
@@ -32,7 +37,7 @@ namespace Frisia.Rewriter
             get
             {
                 return rewriterFalse ??
-                    (rewriterFalse = new FrisiaSyntaxRewriter(ConditionsFalse, Parameters, SMS, solver, logger, LoopIterations, VisitUnsatisfiablePaths));
+                    (rewriterFalse = new FrisiaSyntaxRewriter(ConditionsFalse, Parameters, SMS, solver, logger, LoopIterations, VisitUnsatPaths, LogFoundBranches));
             }
         }
 
@@ -41,8 +46,6 @@ namespace Frisia.Rewriter
         public SeparatedSyntaxList<ParameterSyntax> Parameters { get; private set; }
         public SymbolicMemoryState SMS { get; private set; }
 
-        public bool VisitUnsatisfiablePaths { get; private set; }
-        public uint LoopIterations { get; private set; }
 
         public FrisiaSyntaxRewriter(
             IList<ExpressionSyntax> conditions,
@@ -50,18 +53,23 @@ namespace Frisia.Rewriter
             SymbolicMemoryState sms,
             ISolver solver,
             ILogger logger,
-            uint loopIterations = 1,
-            bool visitUnsatisfiablePaths = false)
+            uint loopIterations,
+            bool visitUnsatPaths,
+            bool logFoundBranches)
         {
-            this.logger = logger;
             this.solver = solver;
-            LoopIterations = loopIterations > 0 ? loopIterations : 1;
             ConditionsTrue = new List<ExpressionSyntax>(conditions);
             ConditionsFalse = new List<ExpressionSyntax>(conditions);
             Parameters = parameters;
             SMS = new SymbolicMemoryState(sms);
             results = new List<string[]>();
-            VisitUnsatisfiablePaths = visitUnsatisfiablePaths;
+            LoopIterations = loopIterations > 0 ? loopIterations : 1;
+            VisitUnsatPaths = visitUnsatPaths;
+            LogFoundBranches = logFoundBranches;
+            if (LogFoundBranches)
+            {
+                this.logger = logger;
+            }
         }
 
         public override SyntaxNode VisitIfStatement(IfStatementSyntax node)
@@ -102,16 +110,16 @@ namespace Frisia.Rewriter
                     ifTrueChild.OfType<ThrowStatementSyntax>().ToArray().Length != 0)
                 {
                     results.Add(modelTrue);
-                    logger.Info("TRUE PATH: " + logPathTrue.TrimEnd(' ', '&'));
+                    logger?.Info("TRUE PATH: " + logPathTrue.TrimEnd(' ', '&'));
                 }
 
                 statementTrue = (StatementSyntax)RewriterTrue.Visit(childBlock);
             }
             else
             {
-                logger.Trace("UNSATISFIABLE: " + logPathTrue.TrimEnd(' ', '&'));
+                logger?.Trace("UNSATISFIABLE: " + logPathTrue.TrimEnd(' ', '&'));
 
-                if (VisitUnsatisfiablePaths)
+                if (VisitUnsatPaths)
                 {
                     statementTrue = (StatementSyntax)RewriterTrue.Visit(childBlock);
                 }
@@ -149,7 +157,7 @@ namespace Frisia.Rewriter
                         ifFalseChild.OfType<ThrowStatementSyntax>().ToArray().Length != 0)
                     {
                         results.Add(modelFalse);
-                        logger.Info("FALSE PATH: " + logPathFalse.TrimEnd(' ', '&'));
+                        logger?.Info("FALSE PATH: " + logPathFalse.TrimEnd(' ', '&'));
                     }
 
                     childBlock = SF.Block(GetElementsFromBlock(node.Else.ChildNodes().OfType<StatementSyntax>()));
@@ -163,12 +171,12 @@ namespace Frisia.Rewriter
             }
             else
             {
-                logger.Trace("UNSATISFIABLE: " + logPathFalse.TrimEnd(' ', '&'));
+                logger?.Trace("UNSATISFIABLE: " + logPathFalse.TrimEnd(' ', '&'));
 
                 if (node.Else != null)
                 {
                     childBlock = SF.Block(GetElementsFromBlock(node.Else.ChildNodes().OfType<StatementSyntax>()));
-                    if (VisitUnsatisfiablePaths)
+                    if (VisitUnsatPaths)
                     {
                         statementFalse = (StatementSyntax)RewriterFalse.Visit(childBlock);
                     }
