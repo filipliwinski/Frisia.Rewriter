@@ -38,7 +38,7 @@ namespace Frisia.Rewriter.Tests
                     var conditions = new List<ExpressionSyntax>();
                     var solver = new Z3Solver();
                     var sms = new SymbolicMemoryState(m.ParameterList.Parameters);
-                    var rewriter = new FrisiaSyntaxRewriter(LoopIterations, conditions, m.ParameterList.Parameters, sms, logger, solver, visitUnsatisfiablePaths: true);
+                    var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, logger, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
 
                     // Act
                     timer.Start();
@@ -113,7 +113,7 @@ namespace Frisia.Rewriter.Tests
             var logger = A.Fake<ILogger>();
             var solver = new Z3Solver();
             var sms = new SymbolicMemoryState(m.ParameterList.Parameters);
-            var rewriter = new FrisiaSyntaxRewriter(LoopIterations, conditions, m.ParameterList.Parameters, sms, logger, solver, visitUnsatisfiablePaths: true);
+            var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, logger, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
 
             // Act
             var rewrittenNode = rewriter.Visit(rootNode);
@@ -148,7 +148,7 @@ namespace Frisia.Rewriter.Tests
                         var logger = A.Fake<ILogger>();
                         var solver = new Z3Solver();
                         var sms = new SymbolicMemoryState(m.ParameterList.Parameters);
-                        var rewriter = new FrisiaSyntaxRewriter(LoopIterations, conditions, m.ParameterList.Parameters, sms, logger, solver, visitUnsatisfiablePaths: true);
+                        var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, logger, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
 
                         // Act
                         var rewrittenNode = rewriter.Visit(m);
@@ -212,7 +212,7 @@ namespace Frisia.Rewriter.Tests
                         var logger = A.Fake<ILogger>();
                         var solver = new Z3Solver();
                         var sms = new SymbolicMemoryState(m.ParameterList.Parameters);
-                        var rewriter = new FrisiaSyntaxRewriter(LoopIterations, conditions, m.ParameterList.Parameters, sms, logger, solver, visitUnsatisfiablePaths: true);
+                        var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, logger, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
 
                         // Act
                         var rewrittenNode = rewriter.Visit(m);
@@ -285,7 +285,7 @@ namespace Frisia.Rewriter.Tests
                         var logger = A.Fake<ILogger>();
                         var solver = new Z3Solver();
                         var sms = new SymbolicMemoryState(m.ParameterList.Parameters);
-                        var rewriter = new FrisiaSyntaxRewriter(LoopIterations, conditions, m.ParameterList.Parameters, sms, logger, solver, visitUnsatisfiablePaths: true);
+                        var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, logger, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
 
                         // Act
                         var rewrittenNode = rewriter.Visit(m);
@@ -351,7 +351,7 @@ namespace Frisia.Rewriter.Tests
                         var logger = A.Fake<ILogger>();
                         var solver = new Z3Solver();
                         var sms = new SymbolicMemoryState(m.ParameterList.Parameters);
-                        var rewriter = new FrisiaSyntaxRewriter(LoopIterations, conditions, m.ParameterList.Parameters, sms, logger, solver, visitUnsatisfiablePaths: true);
+                        var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, logger, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
 
                         // Act
                         var rewrittenNode = rewriter.Visit(m);

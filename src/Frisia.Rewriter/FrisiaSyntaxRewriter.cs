@@ -22,7 +22,7 @@ namespace Frisia.Rewriter
 
         private FrisiaSyntaxRewriter rewriterTrue = null;
         private FrisiaSyntaxRewriter rewriterFalse = null;
-        private List<string[]> results;
+        private IList<string[]> results;
 
         private FrisiaSyntaxRewriter RewriterTrue
         {
@@ -380,7 +380,7 @@ namespace Frisia.Rewriter
             return result;
         }
 
-        public IEnumerable<string[]> GetResults()
+        public IList<string[]> GetResults()
         {
             var totalResults = new List<string[]>(results);
             if (rewriterTrue != null)
@@ -391,6 +391,7 @@ namespace Frisia.Rewriter
             {
                 totalResults.AddRange(rewriterFalse.GetResults());
             }
+
             return totalResults;
         }
 
