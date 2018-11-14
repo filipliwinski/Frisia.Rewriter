@@ -74,11 +74,12 @@ namespace Frisia.Rewriter
 
         public override SyntaxNode VisitIfStatement(IfStatementSyntax node)
         {
-            var logPathTrue = "";
-            var logPathFalse = "";
-            BlockSyntax childBlock;
-            StatementSyntax statementTrue = null;
-            StatementSyntax statementFalse = null;
+            var successLogPath = "";
+            var failureLogPath = "";
+            BlockSyntax successChildBlock;
+            BlockSyntax failureChildBlock;
+            StatementSyntax successStatement = null;
+            StatementSyntax failureStatement = null;
 
             // Separate multi-component conditions
             node = SeparateIfConditions(node);
@@ -91,42 +92,43 @@ namespace Frisia.Rewriter
             {
                 if (c.IsKind(SK.LogicalNotExpression))
                 {
-                    logPathTrue += $"{c} && ";
+                    successLogPath += $"{c} && ";
                 }
                 else
                 {
-                    logPathTrue += $"({c}) && ";
+                    successLogPath += $"({c}) && ";
                 }
             }
-            var modelTrue = solver.GetModel(Parameters, ConditionsTrue);
+            var successModel = solver.GetModel(Parameters, ConditionsTrue);
 
-            childBlock = SF.Block(GetElementsFromBlock(node.ChildNodes().OfType<StatementSyntax>()));
+            // TODO: verify creating child block
+            successChildBlock = SF.Block(GetElementsFromBlock(node.ChildNodes().OfType<StatementSyntax>()));
 
-            if (modelTrue != null)
+            if (successModel != null)
             {
                 // Check if end of path
                 var ifTrueChild = GetStatementAsBlock(node.Statement).ChildNodes();
                 if (ifTrueChild.OfType<ReturnStatementSyntax>().ToArray().Length != 0 ||
                     ifTrueChild.OfType<ThrowStatementSyntax>().ToArray().Length != 0)
                 {
-                    results.Add(modelTrue);
-                    logger?.Info("TRUE PATH: " + logPathTrue.TrimEnd(' ', '&'));
+                    results.Add(successModel);
+                    logger?.Info("TRUE PATH: " + successLogPath.TrimEnd(' ', '&'));
                 }
 
-                statementTrue = (StatementSyntax)RewriterTrue.Visit(childBlock);
+                successStatement = (StatementSyntax)RewriterTrue.Visit(successChildBlock);
             }
             else
             {
-                logger?.Trace("UNSATISFIABLE: " + logPathTrue.TrimEnd(' ', '&'));
+                logger?.Trace("UNSATISFIABLE: " + successLogPath.TrimEnd(' ', '&'));
 
                 if (VisitUnsatPaths)
                 {
-                    statementTrue = (StatementSyntax)RewriterTrue.Visit(childBlock);
+                    successStatement = (StatementSyntax)RewriterTrue.Visit(successChildBlock);
                 }
                 else
                 {
                     // Do not visit unsatisfiable path
-                    statementTrue = childBlock;
+                    successStatement = successChildBlock;
                 }
 
             }
@@ -138,16 +140,16 @@ namespace Frisia.Rewriter
             {
                 if (c.IsKind(SK.LogicalNotExpression))
                 {
-                    logPathFalse += $"{c} && ";
+                    failureLogPath += $"{c} && ";
                 }
                 else
                 {
-                    logPathFalse += $"({c}) && ";
+                    failureLogPath += $"({c}) && ";
                 }
             }
-            var modelFalse = solver.GetModel(Parameters, ConditionsFalse);
+            var failureModel = solver.GetModel(Parameters, ConditionsFalse);
 
-            if (modelFalse != null)
+            if (failureModel != null)
             {
                 if (node.Else != null)
                 {
@@ -156,43 +158,48 @@ namespace Frisia.Rewriter
                     if (ifFalseChild.OfType<ReturnStatementSyntax>().ToArray().Length != 0 ||
                         ifFalseChild.OfType<ThrowStatementSyntax>().ToArray().Length != 0)
                     {
-                        results.Add(modelFalse);
-                        logger?.Info("FALSE PATH: " + logPathFalse.TrimEnd(' ', '&'));
+                        results.Add(failureModel);
+                        logger?.Info("FALSE PATH: " + failureLogPath.TrimEnd(' ', '&'));
                     }
 
-                    childBlock = SF.Block(GetElementsFromBlock(node.Else.ChildNodes().OfType<StatementSyntax>()));
-                    statementFalse = (StatementSyntax)RewriterFalse.Visit(childBlock);
+                    failureChildBlock = SF.Block(GetElementsFromBlock(node.Else.ChildNodes().OfType<StatementSyntax>()));
+                    failureStatement = (StatementSyntax)RewriterFalse.Visit(failureChildBlock);
                 }
                 else
                 {
                     // End of path and nothing to return
-                    return node;
                 }
             }
             else
             {
-                logger?.Trace("UNSATISFIABLE: " + logPathFalse.TrimEnd(' ', '&'));
+                logger?.Trace("UNSATISFIABLE: " + failureLogPath.TrimEnd(' ', '&'));
 
                 if (node.Else != null)
                 {
-                    childBlock = SF.Block(GetElementsFromBlock(node.Else.ChildNodes().OfType<StatementSyntax>()));
+                    failureChildBlock = SF.Block(GetElementsFromBlock(node.Else.ChildNodes().OfType<StatementSyntax>()));
                     if (VisitUnsatPaths)
                     {
-                        statementFalse = (StatementSyntax)RewriterFalse.Visit(childBlock);
+                        failureStatement = (StatementSyntax)RewriterFalse.Visit(failureChildBlock);
                     }
                     else
                     {
                         // Do not visit unsatisfiable path
-                        statementFalse = childBlock;
+                        failureStatement = failureChildBlock;
                     }
                 }
                 else
                 {
+                    // TODO: needs verification
                     // End of path and nothing to return
-                    return node;
+                    //return node;                    
                 }
             }
-            return SF.IfStatement(node.Condition, statementTrue, SF.ElseClause(statementFalse));
+
+            if (failureStatement != null)
+            {
+                return SF.IfStatement(node.Condition, successStatement, SF.ElseClause(failureStatement));
+            }
+            return SF.IfStatement(node.Condition, successStatement);
         }
 
         private IfStatementSyntax SeparateIfConditions(IfStatementSyntax node)

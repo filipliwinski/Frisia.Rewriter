@@ -151,6 +151,7 @@ namespace Frisia.Rewriter.Tests
                         var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, logger, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
 
                         // Act
+
                         var rewrittenNode = rewriter.Visit(m);
 
                         var blocks = rewrittenNode.DescendantNodes().OfType<BlockSyntax>();
