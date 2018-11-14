@@ -1,4 +1,3 @@
-using FakeItEasy;
 using Frisia.Solver;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -34,11 +33,10 @@ namespace Frisia.Rewriter.Tests
 
                 foreach (var m in methods)
                 {
-                    var logger = A.Fake<ILogger>();
                     var conditions = new List<ExpressionSyntax>();
                     var solver = new Z3Solver();
                     var sms = new SymbolicMemoryState(m.ParameterList.Parameters);
-                    var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, logger, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
+                    var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, null, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
 
                     // Act
                     timer.Start();
@@ -110,10 +108,9 @@ namespace Frisia.Rewriter.Tests
             ").GetRoot();
             var m = rootNode.DescendantNodes().OfType<MethodDeclarationSyntax>().First();
             var conditions = new List<ExpressionSyntax>();
-            var logger = A.Fake<ILogger>();
             var solver = new Z3Solver();
             var sms = new SymbolicMemoryState(m.ParameterList.Parameters);
-            var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, logger, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
+            var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, null, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
 
             // Act
             var rewrittenNode = rewriter.Visit(rootNode);
@@ -145,10 +142,9 @@ namespace Frisia.Rewriter.Tests
                     foreach (var m in methods)
                     {
                         var conditions = new List<ExpressionSyntax>();
-                        var logger = A.Fake<ILogger>();
                         var solver = new Z3Solver();
                         var sms = new SymbolicMemoryState(m.ParameterList.Parameters);
-                        var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, logger, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
+                        var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, null, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
 
                         // Act
 
@@ -210,10 +206,9 @@ namespace Frisia.Rewriter.Tests
                     foreach (var m in methods)
                     {
                         var conditions = new List<ExpressionSyntax>();
-                        var logger = A.Fake<ILogger>();
                         var solver = new Z3Solver();
                         var sms = new SymbolicMemoryState(m.ParameterList.Parameters);
-                        var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, logger, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
+                        var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, null, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
 
                         // Act
                         var rewrittenNode = rewriter.Visit(m);
@@ -283,10 +278,9 @@ namespace Frisia.Rewriter.Tests
                     foreach (var m in methods)
                     {
                         var conditions = new List<ExpressionSyntax>();
-                        var logger = A.Fake<ILogger>();
                         var solver = new Z3Solver();
                         var sms = new SymbolicMemoryState(m.ParameterList.Parameters);
-                        var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, logger, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
+                        var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, null, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
 
                         // Act
                         var rewrittenNode = rewriter.Visit(m);
@@ -349,10 +343,9 @@ namespace Frisia.Rewriter.Tests
                     foreach (var m in methods)
                     {
                         var conditions = new List<ExpressionSyntax>();
-                        var logger = A.Fake<ILogger>();
                         var solver = new Z3Solver();
                         var sms = new SymbolicMemoryState(m.ParameterList.Parameters);
-                        var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, logger, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
+                        var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, null, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
 
                         // Act
                         var rewrittenNode = rewriter.Visit(m);
