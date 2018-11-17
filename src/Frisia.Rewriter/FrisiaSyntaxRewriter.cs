@@ -20,29 +20,29 @@ namespace Frisia.Rewriter
         public readonly bool VisitUnsatPaths;
         public readonly bool LogFoundBranches;
 
-        private FrisiaSyntaxRewriter rewriterTrue = null;
-        private FrisiaSyntaxRewriter rewriterFalse = null;
+        private FrisiaSyntaxRewriter successRewriter = null;
+        private FrisiaSyntaxRewriter failureRewriter = null;
         private IList<string[]> results;
 
         private FrisiaSyntaxRewriter RewriterTrue
         {
             get
             {
-                return rewriterTrue ??
-                    (rewriterTrue = new FrisiaSyntaxRewriter(ConditionsTrue, Parameters, SMS, solver, logger, LoopIterations, VisitUnsatPaths, LogFoundBranches));
+                return successRewriter ??
+                    (successRewriter = new FrisiaSyntaxRewriter(SuccessConditions, Parameters, SMS, solver, logger, LoopIterations, VisitUnsatPaths, LogFoundBranches));
             }
         }
         private FrisiaSyntaxRewriter RewriterFalse
         {
             get
             {
-                return rewriterFalse ??
-                    (rewriterFalse = new FrisiaSyntaxRewriter(ConditionsFalse, Parameters, SMS, solver, logger, LoopIterations, VisitUnsatPaths, LogFoundBranches));
+                return failureRewriter ??
+                    (failureRewriter = new FrisiaSyntaxRewriter(FailureConditions, Parameters, SMS, solver, logger, LoopIterations, VisitUnsatPaths, LogFoundBranches));
             }
         }
 
-        public IList<ExpressionSyntax> ConditionsTrue { get; private set; }
-        public IList<ExpressionSyntax> ConditionsFalse { get; private set; }
+        public IList<ExpressionSyntax> SuccessConditions { get; private set; }
+        public IList<ExpressionSyntax> FailureConditions { get; private set; }
         public SeparatedSyntaxList<ParameterSyntax> Parameters { get; private set; }
         public SymbolicMemoryState SMS { get; private set; }
 
@@ -58,8 +58,8 @@ namespace Frisia.Rewriter
             bool logFoundBranches)
         {
             this.solver = solver;
-            ConditionsTrue = new List<ExpressionSyntax>(conditions);
-            ConditionsFalse = new List<ExpressionSyntax>(conditions);
+            SuccessConditions = new List<ExpressionSyntax>(conditions);
+            FailureConditions = new List<ExpressionSyntax>(conditions);
             Parameters = parameters;
             SMS = new SymbolicMemoryState(sms);
             results = new List<string[]>();
@@ -86,9 +86,9 @@ namespace Frisia.Rewriter
 
             var condition = VisitExpression(node.Condition);
 
-            // If - true path
-            ConditionsTrue.Add(condition);
-            foreach (var c in ConditionsTrue)
+            // If - success path
+            SuccessConditions.Add(condition);
+            foreach (var c in SuccessConditions)
             {
                 if (c.IsKind(SK.LogicalNotExpression))
                 {
@@ -99,10 +99,10 @@ namespace Frisia.Rewriter
                     successLogPath += $"({c}) && ";
                 }
             }
-            var successModel = solver.GetModel(Parameters, ConditionsTrue);
+            var successModel = solver.GetModel(Parameters, SuccessConditions);
 
-            // TODO: verify creating child block
-            successChildBlock = SF.Block(GetElementsFromBlock(node.ChildNodes().OfType<StatementSyntax>()));
+            // TODO: verify creation of a child block
+            successChildBlock = SF.Block(GetStatementsFromBlock(node.ChildNodes().OfType<StatementSyntax>()));
 
             if (successModel != null)
             {
@@ -133,10 +133,10 @@ namespace Frisia.Rewriter
 
             }
 
-            // Else - false path
+            // Else - failure path
             var negatedCondition = SF.PrefixUnaryExpression(SK.LogicalNotExpression, SF.ParenthesizedExpression(condition));
-            ConditionsFalse.Add(negatedCondition);
-            foreach (var c in ConditionsFalse)
+            FailureConditions.Add(negatedCondition);
+            foreach (var c in FailureConditions)
             {
                 if (c.IsKind(SK.LogicalNotExpression))
                 {
@@ -147,7 +147,7 @@ namespace Frisia.Rewriter
                     failureLogPath += $"({c}) && ";
                 }
             }
-            var failureModel = solver.GetModel(Parameters, ConditionsFalse);
+            var failureModel = solver.GetModel(Parameters, FailureConditions);
 
             if (failureModel != null)
             {
@@ -162,7 +162,7 @@ namespace Frisia.Rewriter
                         logger?.Info("FALSE PATH: " + failureLogPath.TrimEnd(' ', '&'));
                     }
 
-                    failureChildBlock = SF.Block(GetElementsFromBlock(node.Else.ChildNodes().OfType<StatementSyntax>()));
+                    failureChildBlock = SF.Block(GetStatementsFromBlock(node.Else.ChildNodes().OfType<StatementSyntax>()));
                     failureStatement = (StatementSyntax)RewriterFalse.Visit(failureChildBlock);
                 }
                 else
@@ -176,7 +176,7 @@ namespace Frisia.Rewriter
 
                 if (node.Else != null)
                 {
-                    failureChildBlock = SF.Block(GetElementsFromBlock(node.Else.ChildNodes().OfType<StatementSyntax>()));
+                    failureChildBlock = SF.Block(GetStatementsFromBlock(node.Else.ChildNodes().OfType<StatementSyntax>()));
                     if (VisitUnsatPaths)
                     {
                         failureStatement = (StatementSyntax)RewriterFalse.Visit(failureChildBlock);
@@ -271,7 +271,6 @@ namespace Frisia.Rewriter
 
         public override SyntaxNode VisitReturnStatement(ReturnStatementSyntax node)
         {
-            //ConditionsTrue = ConditionsFalse = null;
             return base.VisitReturnStatement(node);
         }
 
@@ -317,7 +316,7 @@ namespace Frisia.Rewriter
                 // TakeLast(children.Length - 1 - index);
                 var remainingChildren = children.Skip(Math.Max(0, children.Length - (children.Length - 1 - index)));
 
-                var oneBeforeLastChildStatements = GetElementsFromBlock(oneBeforeLastChild.ChildNodes().OfType<StatementSyntax>());
+                var oneBeforeLastChildStatements = GetStatementsFromBlock(oneBeforeLastChild.ChildNodes().OfType<StatementSyntax>());
                 IEnumerable<StatementSyntax> statements;
 
                 if (oneBeforeLastChildStatements.Count() > 0 &&
@@ -337,7 +336,7 @@ namespace Frisia.Rewriter
                 if (oneBeforeLastChild.IsKind(SK.IfStatement))
                 {
                     var ifStatement = (IfStatementSyntax)oneBeforeLastChild;
-                    var elseChilds = GetElementsFromBlock(ifStatement.Else?.ChildNodes().OfType<StatementSyntax>());
+                    var elseChilds = GetStatementsFromBlock(ifStatement.Else?.ChildNodes().OfType<StatementSyntax>());
                     IEnumerable<StatementSyntax> elseStatements;
                     if (elseChilds != null)
                     {
@@ -390,13 +389,13 @@ namespace Frisia.Rewriter
         public IList<string[]> GetResults()
         {
             var totalResults = new List<string[]>(results);
-            if (rewriterTrue != null)
+            if (successRewriter != null)
             {
-                totalResults.AddRange(rewriterTrue.GetResults());
+                totalResults.AddRange(successRewriter.GetResults());
             }
-            if (rewriterFalse != null)
+            if (failureRewriter != null)
             {
-                totalResults.AddRange(rewriterFalse.GetResults());
+                totalResults.AddRange(failureRewriter.GetResults());
             }
 
             return totalResults;
@@ -431,13 +430,13 @@ namespace Frisia.Rewriter
             return -1;
         }
 
-        private IEnumerable<StatementSyntax> GetElementsFromBlock(IEnumerable<StatementSyntax> elementsOrBlock)
+        private IEnumerable<StatementSyntax> GetStatementsFromBlock(IEnumerable<StatementSyntax> statementsOrBlock)
         {
-            if (elementsOrBlock != null && elementsOrBlock.Count() == 1 && elementsOrBlock.Single().IsKind(SK.Block))
+            if (statementsOrBlock != null && statementsOrBlock.Count() == 1 && statementsOrBlock.Single().IsKind(SK.Block))
             {
-                return elementsOrBlock.Single().ChildNodes().OfType<StatementSyntax>();
+                return statementsOrBlock.Single().ChildNodes().OfType<StatementSyntax>();
             }
-            return elementsOrBlock;
+            return statementsOrBlock;
         }
 
         public ExpressionSyntax VisitExpression(ExpressionSyntax node)

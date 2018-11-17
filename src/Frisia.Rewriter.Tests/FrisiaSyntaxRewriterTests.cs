@@ -235,6 +235,75 @@ namespace Frisia.Rewriter.Tests
 
         /// <summary>
         /// INPUT:
+        /// for (int i = 0; i < n; i++)
+        /// {
+        ///     [for]
+        /// }
+        /// 
+        /// OUTPUT:
+        /// int i = 0;
+        /// if (i < n)
+        /// {      
+        ///     [for]
+        ///     i++;
+        ///     if (i < n)
+        ///     {       
+        ///         [for]
+        ///         i++;
+        ///         if (i < n)
+        ///         {
+        ///             [for]
+        ///             i++;
+        ///         }
+        ///     }
+        /// }
+        /// </summary>
+        [Fact]
+        public void While_loop_should_be_converted_to_if_statements()
+        {
+            foreach (var tc in TestCases)
+            {
+                try
+                {
+                    // Debugging
+                    if (!string.IsNullOrEmpty(TestToDebug) && tc.Key != TestToDebug) continue;
+
+                    // Arrange
+                    var rootNode = CSharpSyntaxTree.ParseText(tc.Value).GetRoot();
+                    var methods = rootNode.DescendantNodes().OfType<MethodDeclarationSyntax>();
+
+                    foreach (var m in methods)
+                    {
+                        var conditions = new List<ExpressionSyntax>();
+                        var solver = new Z3Solver();
+                        var sms = new SymbolicMemoryState(m.ParameterList.Parameters);
+                        var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, null, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
+
+                        // Act
+                        var rewrittenNode = rewriter.Visit(m);
+
+                        //Assert
+                        var whileStatements = rootNode.DescendantNodes().OfType<WhileStatementSyntax>().ToArray();
+                        foreach (var whileStatement in whileStatements)
+                        {
+                            var whileCondition = (BinaryExpressionSyntax)whileStatement.Condition;
+                            var rewrittenIfStatements = rewrittenNode.DescendantNodes().OfType<IfStatementSyntax>().Where(s => s.Condition.ToString() == whileCondition.ToString()).ToArray();
+                            Assert.NotEmpty(rewrittenIfStatements);
+                        }
+
+                        var rewrittenWhileStatements = rewrittenNode.DescendantNodes().OfType<WhileStatementSyntax>().ToArray();
+                        Assert.Empty(rewrittenWhileStatements);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new TestCaseFailedException(tc.Key, ex);
+                }
+            }
+        }
+
+        /// <summary>
+        /// INPUT:
         /// if (a && b)
         /// {
         ///     [a && b]
@@ -360,6 +429,134 @@ namespace Frisia.Rewriter.Tests
                 {
                     throw new TestCaseFailedException(tc.Key, ex);
                 }
+            }
+        }
+
+        /// <summary>
+        /// INPUT:
+        /// if (a && b)
+        /// {
+        ///     [a && b]
+        /// }
+        /// else
+        /// {
+        ///     ![a && b]
+        /// }
+        /// 
+        /// OUTPUT:
+        /// if (a)
+        /// {
+        ///     if (b)
+        ///     {
+        ///         [a && b]
+        ///     }
+        ///     else
+        ///     {
+        ///         ![a && b]
+        ///     }   
+        /// }
+        /// else
+        /// {
+        ///     ![a && b]
+        /// }
+        /// </summary>
+        [Fact]
+        public void AND_expressions_should_be_replaced_correctly()
+        {
+            // Arrange
+            var rootNode = CSharpSyntaxTree.ParseText(@"
+            using System;
+
+            namespace Frisia.CodeReduction
+            {
+                class Program
+                {
+                    public static void Method(int a, int b)
+                    {
+                        if (a > 0 && b > 0)
+                        {
+                            Console.WriteLine(""a > 0 && b > 0"");
+                                
+                            if (a > 1 && b > 1)
+                            {
+                                Console.WriteLine(""a > 1 && b > 1"");
+
+                                if (a > 2 && b > 2)
+                                {
+                                    Console.WriteLine(""a > 2 && b > 2"");
+                                }
+                                else
+                                {
+                                    Console.WriteLine(""!(a > 2 && b > 2)"");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine(""!(a > 1 && b > 1)"");
+
+                                if (a > 2 && b > 2)
+                                {
+                                    Console.WriteLine(""a > 2 && b > 2"");
+                                }
+                                else
+                                {
+                                    Console.WriteLine(""!(a > 2 && b > 2)"");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine(""!(a > 0 && b > 0)"");
+
+                            if (a < 1 && b < 1)
+                            {
+                                Console.WriteLine(""a < 1 && b < 1"");
+
+                                if (a < 2 && b < 2)
+                                {
+                                    Console.WriteLine(""a < 2 && b < 2"");
+                                }
+                                else
+                                {
+                                    Console.WriteLine(""!(a < 2 && b < 2)"");
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine(""!(a < 1 && b < 1)"");
+
+                                if (a < 2 && b < 2)
+                                {
+                                    Console.WriteLine(""a < 2 && b < 2"");
+                                }
+                                else
+                                {
+                                    Console.WriteLine(""!(a < 2 && b < 2)"");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            ").GetRoot();
+
+            var methods = rootNode.DescendantNodes().OfType<MethodDeclarationSyntax>();
+            foreach (var m in methods)
+            {
+                var conditions = new List<ExpressionSyntax>();
+                var solver = new Z3Solver();
+                var sms = new SymbolicMemoryState(m.ParameterList.Parameters);
+                var rewriter = new FrisiaSyntaxRewriter(conditions, m.ParameterList.Parameters, sms, solver, null, LoopIterations, visitUnsatPaths: true, logFoundBranches: false);
+
+
+                // Act
+                var rewrittenNode = rewriter.Visit(rootNode);
+
+                //var ifStatements = rootNode.DescendantNodes().OfType<IfStatementSyntax>().ToArray();
+                var rewrittenIfStatements = rewrittenNode.DescendantNodes().OfType<IfStatementSyntax>().ToArray();
+
+                // Assert
+                Assert.Equal(26, rewrittenIfStatements.Length);
             }
         }
     }

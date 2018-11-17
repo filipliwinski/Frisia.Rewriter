@@ -22,6 +22,7 @@ namespace Frisia.Rewriter.Tests
             return testCases;
         }
 
+        // TODO: Use this method in tests
         public static string GetRewrittenCase(string caseName)
         {
             var testCasesPath = Path.Combine(Directory.GetCurrentDirectory(), "TestCasesRewritten");
