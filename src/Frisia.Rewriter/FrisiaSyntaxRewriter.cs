@@ -500,7 +500,8 @@ namespace Frisia.Rewriter
 
         public override SyntaxNode VisitPostfixUnaryExpression(PostfixUnaryExpressionSyntax node)
         {
-            if (node.IsKind(SK.PostIncrementExpression))
+            if (node.IsKind(SK.PostIncrementExpression) ||
+                node.IsKind(SK.PostDecrementExpression))
             {
                 var identifier = ((IdentifierNameSyntax)node.Operand).Identifier.Text;
                 SMS.Update(identifier, node);
@@ -514,7 +515,8 @@ namespace Frisia.Rewriter
 
         public override SyntaxNode VisitPrefixUnaryExpression(PrefixUnaryExpressionSyntax node)
         {
-            if (node.IsKind(SK.PreIncrementExpression))
+            if (node.IsKind(SK.PreIncrementExpression) ||
+                node.IsKind(SK.PreDecrementExpression))
             {
                 var identifier = ((IdentifierNameSyntax)node.Operand).Identifier.Text;
                 SMS.Update(identifier, node);

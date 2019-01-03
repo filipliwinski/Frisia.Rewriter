@@ -18,6 +18,8 @@
     <Compile Remove="TestCases\TestCase_009.cs" />
     <Compile Remove="TestCases\TestCase_010.cs" />
     <Compile Remove="TestCases\TestCase_011.cs" />
+    <Compile Remove="TestCases\TestCase_012.cs" />
+    <Compile Remove="TestCases\TestCase_013.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -52,6 +54,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="TestCases\TestCase_010.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_013.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_012.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

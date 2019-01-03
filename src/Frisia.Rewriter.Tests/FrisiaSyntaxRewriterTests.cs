@@ -2,7 +2,6 @@ using Frisia.Solver;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using NLog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
