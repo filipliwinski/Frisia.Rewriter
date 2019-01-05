@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
@@ -35,7 +36,28 @@ namespace Frisia.Rewriter
 
         public void Update(string key, ExpressionSyntax node)
         {
-            Variables[key] = VisitExpression(node);
+            Variables[key] = Simplify(node);
+        }
+
+        private ExpressionSyntax Simplify(ExpressionSyntax node)
+        {
+            var expression = VisitExpression(node);
+            var value = CSharpScript.EvaluateAsync(expression.ToString()).Result;
+            switch (value)
+            {
+                case bool bool_value:
+                    return expression;
+                case byte byte_value:
+                    return SF.LiteralExpression(SK.NumericLiteralExpression, SF.Literal(byte_value));
+                case short short_value:
+                    return SF.LiteralExpression(SK.NumericLiteralExpression, SF.Literal(short_value));
+                case int int_value:
+                    return SF.LiteralExpression(SK.NumericLiteralExpression, SF.Literal(int_value));
+                case long long_value:
+                    return SF.LiteralExpression(SK.NumericLiteralExpression, SF.Literal(long_value));
+                default:
+                    throw new NotImplementedException($"Unsupported type: {value.GetType().Name}.");
+            }
         }
 
         private ExpressionSyntax VisitExpression(ExpressionSyntax node)
