@@ -6,6 +6,7 @@ using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using SF = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using SK = Microsoft.CodeAnalysis.CSharp.SyntaxKind;
 
@@ -19,7 +20,7 @@ namespace Frisia.Rewriter
         public readonly uint LoopIterations;
         public readonly bool VisitUnsatPaths;
         public readonly bool LogFoundBranches;
-
+        public readonly int Timeout;
         private FrisiaSyntaxRewriter successRewriter = null;
         private FrisiaSyntaxRewriter failureRewriter = null;
         private IList<string[]> results;
@@ -29,7 +30,7 @@ namespace Frisia.Rewriter
             get
             {
                 return successRewriter ??
-                    (successRewriter = new FrisiaSyntaxRewriter(SuccessConditions, Parameters, SMS, solver, logger, LoopIterations, VisitUnsatPaths, LogFoundBranches));
+                    (successRewriter = new FrisiaSyntaxRewriter(SuccessConditions, Parameters, SMS, solver, logger, LoopIterations, VisitUnsatPaths, LogFoundBranches, Timeout));
             }
         }
         private FrisiaSyntaxRewriter RewriterFalse
@@ -37,7 +38,7 @@ namespace Frisia.Rewriter
             get
             {
                 return failureRewriter ??
-                    (failureRewriter = new FrisiaSyntaxRewriter(FailureConditions, Parameters, SMS, solver, logger, LoopIterations, VisitUnsatPaths, LogFoundBranches));
+                    (failureRewriter = new FrisiaSyntaxRewriter(FailureConditions, Parameters, SMS, solver, logger, LoopIterations, VisitUnsatPaths, LogFoundBranches, Timeout));
             }
         }
 
@@ -55,7 +56,8 @@ namespace Frisia.Rewriter
             ILogger logger,
             uint loopIterations,
             bool visitUnsatPaths,
-            bool logFoundBranches)
+            bool logFoundBranches,
+            int timeout)
         {
             this.solver = solver;
             SuccessConditions = new List<ExpressionSyntax>(conditions);
@@ -66,6 +68,7 @@ namespace Frisia.Rewriter
             LoopIterations = loopIterations > 0 ? loopIterations : 1;
             VisitUnsatPaths = visitUnsatPaths;
             LogFoundBranches = logFoundBranches;
+            Timeout = timeout;
             if (LogFoundBranches)
             {
                 this.logger = logger;
@@ -99,7 +102,17 @@ namespace Frisia.Rewriter
                     successLogPath += $"({c}) && ";
                 }
             }
-            var successModel = solver.GetModel(Parameters, SuccessConditions);
+
+            string[] successModel = null;
+            var timeout = false;
+            try
+            {
+                successModel = GetModel(Parameters, SuccessConditions);
+            }
+            catch (TimeoutException)
+            {
+                timeout = true;
+            }
 
             // TODO: verify creation of a child block
             successChildBlock = SF.Block(GetStatementsFromBlock(node.ChildNodes().OfType<StatementSyntax>()));
@@ -119,9 +132,14 @@ namespace Frisia.Rewriter
             }
             else
             {
-                logger?.Trace("UNSATISFIABLE: " + successLogPath.TrimEnd(' ', '&'));
+                var status = "UNSATISFIABLE";
+                if (timeout)
+                {
+                    status = "TIMEOUT";
+                }
+                logger?.Trace($"{status}: " + successLogPath.TrimEnd(' ', '&'));
 
-                if (VisitUnsatPaths)
+                if (VisitUnsatPaths && !timeout)
                 {
                     successStatement = (StatementSyntax)RewriterTrue.Visit(successChildBlock);
                 }
@@ -130,7 +148,6 @@ namespace Frisia.Rewriter
                     // Do not visit unsatisfiable path
                     successStatement = successChildBlock;
                 }
-
             }
 
             // Else - failure path
@@ -147,7 +164,17 @@ namespace Frisia.Rewriter
                     failureLogPath += $"({c}) && ";
                 }
             }
-            var failureModel = solver.GetModel(Parameters, FailureConditions);
+
+            string[] failureModel = null;
+            timeout = false;
+            try
+            {
+                failureModel = GetModel(Parameters, FailureConditions);
+            }
+            catch (TimeoutException)
+            {
+                timeout = true;
+            }
 
             if (failureModel != null)
             {
@@ -172,12 +199,18 @@ namespace Frisia.Rewriter
             }
             else
             {
-                logger?.Trace("UNSATISFIABLE: " + failureLogPath.TrimEnd(' ', '&'));
+                var status = "UNSATISFIABLE";
+                if (timeout)
+                {
+                    status = "TIMEOUT";
+                }
+                logger?.Trace($"{status}: " + successLogPath.TrimEnd(' ', '&'));
 
                 if (node.Else != null)
                 {
                     failureChildBlock = SF.Block(GetStatementsFromBlock(node.Else.ChildNodes().OfType<StatementSyntax>()));
-                    if (VisitUnsatPaths)
+
+                    if (VisitUnsatPaths && !timeout)
                     {
                         failureStatement = (StatementSyntax)RewriterFalse.Visit(failureChildBlock);
                     }
@@ -200,6 +233,25 @@ namespace Frisia.Rewriter
                 return SF.IfStatement(node.Condition, successStatement, SF.ElseClause(failureStatement));
             }
             return SF.IfStatement(node.Condition, successStatement);
+        }
+
+        private string[] GetModel(SeparatedSyntaxList<ParameterSyntax> parameters, IList<ExpressionSyntax> successConditions)
+        {
+            var task = Task.Run(() =>
+            {
+                return solver.GetModel(Parameters, SuccessConditions);
+            });
+
+            bool isCompleted = task.Wait(Timeout * 1000);
+
+            if (isCompleted)
+            {
+                return task.Result;
+            }
+            else
+            {
+                throw new TimeoutException();
+            }
         }
 
         private IfStatementSyntax SeparateIfConditions(IfStatementSyntax node)
