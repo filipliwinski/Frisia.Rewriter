@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using SF = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using SK = Microsoft.CodeAnalysis.CSharp.SyntaxKind;
 
@@ -42,22 +43,48 @@ namespace Frisia.Rewriter
         private ExpressionSyntax Simplify(ExpressionSyntax node)
         {
             var expression = VisitExpression(node);
-            var value = CSharpScript.EvaluateAsync(expression.ToString()).Result;
-            switch (value)
+            try
             {
-                case bool bool_value:
-                    return expression;
-                case byte byte_value:
-                    return SF.LiteralExpression(SK.NumericLiteralExpression, SF.Literal(byte_value));
-                case short short_value:
-                    return SF.LiteralExpression(SK.NumericLiteralExpression, SF.Literal(short_value));
-                case int int_value:
-                    return SF.LiteralExpression(SK.NumericLiteralExpression, SF.Literal(int_value));
-                case long long_value:
-                    return SF.LiteralExpression(SK.NumericLiteralExpression, SF.Literal(long_value));
-                default:
-                    throw new NotImplementedException($"Unsupported type: {value.GetType().Name}.");
+                var stringExpression = GetAsString(expression);
+                var value = CSharpScript.EvaluateAsync(stringExpression).Result;
+                switch (value)
+                {
+                    case bool bool_value:
+                        return expression;
+                    case byte byte_value:
+                        return SF.LiteralExpression(SK.NumericLiteralExpression, SF.Literal(byte_value));
+                    case short short_value:
+                        return SF.LiteralExpression(SK.NumericLiteralExpression, SF.Literal(short_value));
+                    case int int_value:
+                        return SF.LiteralExpression(SK.NumericLiteralExpression, SF.Literal(int_value));
+                    case long long_value:
+                        return SF.LiteralExpression(SK.NumericLiteralExpression, SF.Literal(long_value));
+                    default:
+                        throw new NotImplementedException($"Unsupported type: {value.GetType().Name}.");
+                }
             }
+            catch (Exception)
+            {
+                return expression;
+            }
+        }
+
+        private string GetAsString(ExpressionSyntax expression)
+        {
+            if (expression is BinaryExpressionSyntax binaryExpression)
+            {
+                var r = GetAsString(binaryExpression.Left) + binaryExpression.OperatorToken.Text + GetAsString(binaryExpression.Right);
+                return $"({r})";
+            }
+            if (expression is LiteralExpressionSyntax literalExpression)
+            {
+                return literalExpression.ToString();
+            }
+            if (expression is IdentifierNameSyntax identifierName)
+            {
+                return identifierName.ToString();
+            }
+            throw new NotImplementedException($"Unsupported expression: {expression.Kind()}.");
         }
 
         private ExpressionSyntax VisitExpression(ExpressionSyntax node)
