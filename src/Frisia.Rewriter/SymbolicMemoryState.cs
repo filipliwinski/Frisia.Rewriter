@@ -91,8 +91,8 @@ namespace Frisia.Rewriter
         {
             if (node is BinaryExpressionSyntax binaryExpresson)
             {
-                var left = VisitExpression(binaryExpresson.Left);
-                var right = VisitExpression(binaryExpresson.Right);
+                var left = Simplify(binaryExpresson.Left);
+                var right = Simplify(binaryExpresson.Right);
                 return SF.BinaryExpression(node.Kind(), left, right);
             }
             if (node is IdentifierNameSyntax identifierName)
@@ -121,6 +121,7 @@ namespace Frisia.Rewriter
                             return SF.BinaryExpression(SK.AddExpression, value, SF.LiteralExpression(SK.NumericLiteralExpression, SF.Literal(1)));
                         case SK.UnaryMinusExpression:
                         case SK.UnaryPlusExpression:
+                            return node;
                         default:
                             throw new NotImplementedException($"Unsupported expression type: {prefixUnaryExpression.Operand.GetType().Name} ({operantIdentifierName.Kind().ToString()})");
                     }
@@ -128,6 +129,10 @@ namespace Frisia.Rewriter
                 if (prefixUnaryExpression.Operand is LiteralExpressionSyntax)
                 {
                     return node;
+                }
+                if (prefixUnaryExpression.Operand is ParenthesizedExpressionSyntax operandParenthesizedExpression)
+                {
+                    return SF.PrefixUnaryExpression(prefixUnaryExpression.Kind(), Simplify(operandParenthesizedExpression));
                 }
                 throw new NotImplementedException($"Unsupported expression type: {prefixUnaryExpression.Operand.GetType().Name}");
             }
@@ -150,11 +155,15 @@ namespace Frisia.Rewriter
                 {
                     return node;
                 }
+                if (postfixUnaryExpression.Operand is ParenthesizedExpressionSyntax operandParenthesizedExpression)
+                {
+                    return SF.PostfixUnaryExpression(postfixUnaryExpression.Kind(), Simplify(operandParenthesizedExpression));
+                }
                 throw new NotImplementedException($"Unsupported expression type: {postfixUnaryExpression.Operand.GetType().Name}");
             }
             if (node is ParenthesizedExpressionSyntax parenthesizedExpression)
             {
-                return VisitExpression(parenthesizedExpression.Expression);
+                return SF.ParenthesizedExpression(Simplify(parenthesizedExpression.Expression));
             }
             throw new NotImplementedException($"Unsupported expression type:  {node.GetType().Name}");
         }

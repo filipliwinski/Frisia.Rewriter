@@ -204,7 +204,7 @@ namespace Frisia.Rewriter
                 {
                     status = "TIMEOUT";
                 }
-                logger?.Trace($"{status}: " + successLogPath.TrimEnd(' ', '&'));
+                logger?.Trace($"{status}: " + failureLogPath.TrimEnd(' ', '&'));
 
                 if (node.Else != null)
                 {
