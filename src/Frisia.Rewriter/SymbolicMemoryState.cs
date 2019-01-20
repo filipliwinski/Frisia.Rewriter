@@ -32,7 +32,16 @@ namespace Frisia.Rewriter
         {
             var equalsValue = SF.EqualsValueClause(VisitExpression(node.Initializer.Value));
             node = SF.VariableDeclarator(node.Identifier, null, equalsValue);
-            Variables.Add(node.Identifier.Text, node.Initializer.Value);
+
+            if (Variables.ContainsKey(node.Identifier.Text))
+            {
+                // Temporary solution for variables declaration in loops
+                Update(node.Identifier.Text, node.Initializer.Value);
+            }
+            else
+            {
+                Variables.Add(node.Identifier.Text, node.Initializer.Value);
+            }
         }
 
         public void Update(string key, ExpressionSyntax node)
