@@ -35,7 +35,7 @@ namespace Frisia.Rewriter
 
             if (Variables.ContainsKey(node.Identifier.Text))
             {
-                // Temporary solution for variables declaration in loops
+                // Temporary workaround for variables declaration in loops
                 Update(node.Identifier.Text, node.Initializer.Value);
             }
             else

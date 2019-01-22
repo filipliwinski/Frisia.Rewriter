@@ -235,11 +235,11 @@ namespace Frisia.Rewriter
             return SF.IfStatement(node.Condition, successStatement);
         }
 
-        private string[] GetModel(SeparatedSyntaxList<ParameterSyntax> parameters, IList<ExpressionSyntax> successConditions)
+        private string[] GetModel(SeparatedSyntaxList<ParameterSyntax> parameters, IList<ExpressionSyntax> conditions)
         {
             var task = Task.Run(() =>
             {
-                return solver.GetModel(Parameters, SuccessConditions);
+                return solver.GetModel(parameters, conditions);
             });
 
             bool isCompleted = task.Wait(Timeout * 1000);
