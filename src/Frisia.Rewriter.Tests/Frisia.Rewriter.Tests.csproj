@@ -21,6 +21,24 @@
     <Compile Remove="TestCases\TestCase_012.cs" />
     <Compile Remove="TestCases\TestCase_013.cs" />
     <Compile Remove="TestCases\TestCase_014.cs" />
+    <Compile Remove="TestCases\TestCase_015.cs" />
+    <Compile Remove="TestCases\TestCase_016.cs" />
+    <Compile Remove="TestCases\TestCase_017.cs" />
+    <Compile Remove="TestCases\TestCase_018.cs" />
+    <Compile Remove="TestCases\TestCase_019.cs" />
+    <Compile Remove="TestCases\TestCase_020.cs" />
+    <Compile Remove="TestCases\TestCase_021.cs" />
+    <Compile Remove="TestCases\TestCase_022.cs" />
+    <Compile Remove="TestCases\TestCase_023.cs" />
+    <Compile Remove="TestCases\TestCase_024.cs" />
+    <Compile Remove="TestCases\TestCase_025.cs" />
+    <Compile Remove="TestCases\TestCase_026.cs" />
+    <Compile Remove="TestCases\TestCase_027.cs" />
+    <Compile Remove="TestCases\TestCase_028.cs" />
+    <Compile Remove="TestCases\TestCase_029.cs" />
+    <Compile Remove="TestCases\TestCase_030.cs" />
+    <Compile Remove="TestCases\TestCase_031.cs" />
+    <Compile Remove="TestCases\TestCase_032.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -55,6 +73,60 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="TestCases\TestCase_010.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_032.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_031.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_030.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_029.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_028.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_027.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_026.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_025.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_024.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_023.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_022.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_021.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_020.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_019.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_018.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_017.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_016.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TestCases\TestCase_015.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="TestCases\TestCase_014.cs">
