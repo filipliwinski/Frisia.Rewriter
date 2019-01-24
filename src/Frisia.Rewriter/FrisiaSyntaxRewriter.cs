@@ -162,8 +162,8 @@ namespace Frisia.Rewriter
                 }
                 logger?.Trace($"{status}: " + successLogPath.TrimEnd(' ', '&'));
 
-                // Do not visit unsatisfiable path if timeout or disabled in settings
-                if (VisitUnsatPaths || !timeout || VisitTimeoutPaths)
+                // Do not visit unsatisfiable paths
+                if (VisitUnsatPaths || (timeout && VisitTimeoutPaths))
                 {
                     successStatement = (StatementSyntax)RewriterTrue.Visit(successChildBlock);
                 }
@@ -233,8 +233,8 @@ namespace Frisia.Rewriter
                 {
                     failureChildBlock = SF.Block(GetStatementsFromBlock(node.Else.ChildNodes().OfType<StatementSyntax>()));
 
-                    // Do not visit unsatisfiable path if timeout or disabled in settings
-                    if (VisitUnsatPaths || !timeout || VisitTimeoutPaths)
+                    // Do not visit unsatisfiable paths
+                    if (VisitUnsatPaths || (timeout && VisitTimeoutPaths))
                     {
                         failureStatement = (StatementSyntax)RewriterFalse.Visit(failureChildBlock);
                     }
