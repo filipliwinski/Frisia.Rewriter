@@ -19,6 +19,7 @@ namespace Frisia.Rewriter
 
         public readonly uint LoopIterations;
         public readonly bool VisitUnsatPaths;
+        public readonly bool VisitTimeoutPaths;
         public readonly bool LogFoundBranches;
         public readonly int Timeout;
         private FrisiaSyntaxRewriter successRewriter = null;
@@ -30,7 +31,17 @@ namespace Frisia.Rewriter
             get
             {
                 return successRewriter ??
-                    (successRewriter = new FrisiaSyntaxRewriter(SuccessConditions, Parameters, SMS, solver, logger, LoopIterations, VisitUnsatPaths, LogFoundBranches, Timeout));
+                    (successRewriter = new FrisiaSyntaxRewriter(
+                        SuccessConditions, 
+                        Parameters, 
+                        SMS, 
+                        solver, 
+                        logger, 
+                        LoopIterations, 
+                        VisitUnsatPaths, 
+                        VisitTimeoutPaths, 
+                        LogFoundBranches, 
+                        Timeout));
             }
         }
         private FrisiaSyntaxRewriter RewriterFalse
@@ -38,7 +49,17 @@ namespace Frisia.Rewriter
             get
             {
                 return failureRewriter ??
-                    (failureRewriter = new FrisiaSyntaxRewriter(FailureConditions, Parameters, SMS, solver, logger, LoopIterations, VisitUnsatPaths, LogFoundBranches, Timeout));
+                    (failureRewriter = new FrisiaSyntaxRewriter(
+                        FailureConditions, 
+                        Parameters, 
+                        SMS, 
+                        solver, 
+                        logger, 
+                        LoopIterations, 
+                        VisitUnsatPaths, 
+                        VisitTimeoutPaths, 
+                        LogFoundBranches, 
+                        Timeout));
             }
         }
 
@@ -56,6 +77,7 @@ namespace Frisia.Rewriter
             ILogger logger,
             uint loopIterations,
             bool visitUnsatPaths,
+            bool visitTimeoutPaths,
             bool logFoundBranches,
             int timeout)
         {
@@ -67,6 +89,7 @@ namespace Frisia.Rewriter
             results = new List<string[]>();
             LoopIterations = loopIterations > 0 ? loopIterations : 1;
             VisitUnsatPaths = visitUnsatPaths;
+            VisitTimeoutPaths = visitTimeoutPaths;
             LogFoundBranches = logFoundBranches;
             Timeout = timeout;
             if (LogFoundBranches)
@@ -125,7 +148,7 @@ namespace Frisia.Rewriter
                     ifTrueChild.OfType<ThrowStatementSyntax>().ToArray().Length != 0)
                 {
                     results.Add(successModel);
-                    logger?.Info("TRUE PATH: " + successLogPath.TrimEnd(' ', '&'));
+                    logger?.Info("SUCCESS PATH: " + successLogPath.TrimEnd(' ', '&'));
                 }
 
                 successStatement = (StatementSyntax)RewriterTrue.Visit(successChildBlock);
@@ -140,7 +163,7 @@ namespace Frisia.Rewriter
                 logger?.Trace($"{status}: " + successLogPath.TrimEnd(' ', '&'));
 
                 // Do not visit unsatisfiable path if timeout or disabled in settings
-                if (VisitUnsatPaths || !timeout)
+                if (VisitUnsatPaths || !timeout || VisitTimeoutPaths)
                 {
                     successStatement = (StatementSyntax)RewriterTrue.Visit(successChildBlock);
                 }
@@ -186,7 +209,7 @@ namespace Frisia.Rewriter
                         ifFalseChild.OfType<ThrowStatementSyntax>().ToArray().Length != 0)
                     {
                         results.Add(failureModel);
-                        logger?.Info("FALSE PATH: " + failureLogPath.TrimEnd(' ', '&'));
+                        logger?.Info("FAILURE PATH: " + failureLogPath.TrimEnd(' ', '&'));
                     }
 
                     failureChildBlock = SF.Block(GetStatementsFromBlock(node.Else.ChildNodes().OfType<StatementSyntax>()));
@@ -211,7 +234,7 @@ namespace Frisia.Rewriter
                     failureChildBlock = SF.Block(GetStatementsFromBlock(node.Else.ChildNodes().OfType<StatementSyntax>()));
 
                     // Do not visit unsatisfiable path if timeout or disabled in settings
-                    if (VisitUnsatPaths || !timeout)
+                    if (VisitUnsatPaths || !timeout || VisitTimeoutPaths)
                     {
                         failureStatement = (StatementSyntax)RewriterFalse.Visit(failureChildBlock);
                     }
