@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using NLog;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using SF = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
@@ -14,6 +15,8 @@ namespace Frisia.Rewriter
 {
     public sealed class FrisiaSyntaxRewriter : CSharpSyntaxRewriter
     {
+        private readonly string timeFormat = @"mm\:ss\.fff";
+
         private readonly ILogger logger;
         private readonly ISolver solver;
 
@@ -100,6 +103,7 @@ namespace Frisia.Rewriter
 
         public override SyntaxNode VisitIfStatement(IfStatementSyntax node)
         {
+            var timer = new Stopwatch();
             var successLogPath = "";
             var failureLogPath = "";
             BlockSyntax successChildBlock;
@@ -130,7 +134,9 @@ namespace Frisia.Rewriter
             var timeout = false;
             try
             {
+                timer.Restart();
                 successModel = GetModel(Parameters, SuccessConditions);
+                timer.Stop();
             }
             catch (TimeoutException)
             {
@@ -148,7 +154,7 @@ namespace Frisia.Rewriter
                     ifTrueChild.OfType<ThrowStatementSyntax>().ToArray().Length != 0)
                 {
                     results.Add(successModel);
-                    logger?.Info("SUCCESS PATH: " + successLogPath.TrimEnd(' ', '&'));
+                    logger?.Info($"SUCCESS PATH: {successLogPath.TrimEnd(' ', '&')} [{timer.Elapsed.ToString(timeFormat)}]");
                 }
 
                 successStatement = (StatementSyntax)RewriterTrue.Visit(successChildBlock);
@@ -192,7 +198,9 @@ namespace Frisia.Rewriter
             timeout = false;
             try
             {
+                timer.Restart();
                 failureModel = GetModel(Parameters, FailureConditions);
+                timer.Stop();
             }
             catch (TimeoutException)
             {
@@ -209,7 +217,7 @@ namespace Frisia.Rewriter
                         ifFalseChild.OfType<ThrowStatementSyntax>().ToArray().Length != 0)
                     {
                         results.Add(failureModel);
-                        logger?.Info("FAILURE PATH: " + failureLogPath.TrimEnd(' ', '&'));
+                        logger?.Info($"FAILURE PATH: {failureLogPath.TrimEnd(' ', '&')} [{timer.Elapsed.ToString(timeFormat)}]");
                     }
 
                     failureChildBlock = SF.Block(GetStatementsFromBlock(node.Else.ChildNodes().OfType<StatementSyntax>()));
