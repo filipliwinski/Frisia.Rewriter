@@ -129,6 +129,7 @@ namespace Frisia.Rewriter
                     successLogPath += $"({c}) && ";
                 }
             }
+            successLogPath = successLogPath.TrimEnd(' ', '&');
 
             string[] successModel = null;
             var timeout = false;
@@ -154,7 +155,7 @@ namespace Frisia.Rewriter
                     ifTrueChild.OfType<ThrowStatementSyntax>().ToArray().Length != 0)
                 {
                     results.Add(successModel);
-                    logger?.Info($"SUCCESS PATH: {successLogPath.TrimEnd(' ', '&')} [{timer.Elapsed.ToString(timeFormat)}]");
+                    logger?.Info($"SUCCESS PATH: {successLogPath} [{timer.Elapsed.ToString(timeFormat)}]");
                 }
 
                 successStatement = (StatementSyntax)RewriterTrue.Visit(successChildBlock);
@@ -166,7 +167,7 @@ namespace Frisia.Rewriter
                 {
                     status = "TIMEOUT";
                 }
-                logger?.Trace($"{status}: " + successLogPath.TrimEnd(' ', '&'));
+                logger?.Trace($"{status}: {successLogPath} [{timer.Elapsed.ToString(timeFormat)}]");
 
                 // Do not visit unsatisfiable paths
                 if (VisitUnsatPaths || (timeout && VisitTimeoutPaths))
@@ -193,6 +194,7 @@ namespace Frisia.Rewriter
                     failureLogPath += $"({c}) && ";
                 }
             }
+            failureLogPath = failureLogPath.TrimEnd(' ', '&');
 
             string[] failureModel = null;
             timeout = false;
@@ -217,7 +219,7 @@ namespace Frisia.Rewriter
                         ifFalseChild.OfType<ThrowStatementSyntax>().ToArray().Length != 0)
                     {
                         results.Add(failureModel);
-                        logger?.Info($"FAILURE PATH: {failureLogPath.TrimEnd(' ', '&')} [{timer.Elapsed.ToString(timeFormat)}]");
+                        logger?.Info($"FAILURE PATH: {failureLogPath} [{timer.Elapsed.ToString(timeFormat)}]");
                     }
 
                     failureChildBlock = SF.Block(GetStatementsFromBlock(node.Else.ChildNodes().OfType<StatementSyntax>()));
@@ -235,7 +237,7 @@ namespace Frisia.Rewriter
                 {
                     status = "TIMEOUT";
                 }
-                logger?.Trace($"{status}: " + failureLogPath.TrimEnd(' ', '&'));
+                logger?.Trace($"{status}: {failureLogPath} [{ timer.Elapsed.ToString(timeFormat)}]");
 
                 if (node.Else != null)
                 {
